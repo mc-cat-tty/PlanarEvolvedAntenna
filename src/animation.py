@@ -1,19 +1,19 @@
-#!/usr/bin/env python3
-
 import pickle
+from manim import *
 from os.path import join
-from config import Config
-from core.population import Population
+from typing import List
+from utils.geometry import Segment
 
-CONFIG_FILENAME = "config.yaml"
 OUTPUT_DIRECTORY = "results"
 
-if __name__ == "__main__":
-  with open(CONFIG_FILENAME, "r") as f:
-    Config.loadYaml(f)
+class RodIncrementalGen(Scene):
+  def construct(self):
+    epoch = 3
+    coordZ = [0]
 
-  pop = Population()
-  for generation, epoch in pop.generations():
-    print(generation)
-    with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "wb") as f:
-      pickle.dump(generation, f)
+    generationSegments = List[List[Segment]]
+    with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "rb") as f:
+      generationSegments = pickle.load(f)
+    
+    p = Polygon(*[segment + coordZ for segment in generationSegments[0]])
+    self.add(p)
