@@ -18,8 +18,7 @@ if __name__ == "__main__":
     with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "wb") as f:
       pickle.dump([
         [
-          list(segment.toList()[i])
-          for i in range(2)
+          segment.toList()
           for segment in gene.getCartesianCoords()
         ] for gene in generation
       ], f)

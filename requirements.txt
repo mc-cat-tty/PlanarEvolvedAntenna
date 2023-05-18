@@ -6,7 +6,6 @@ cloup==0.13.1
 colour==0.1.5
 contourpy==1.0.7
 cycler==0.11.0
-Cython==0.29.34
 decorator==5.1.1
 fonttools==4.39.3
 glcontext==2.3.7
@@ -32,8 +31,6 @@ pycairo==1.23.0
 pydub==0.25.1
 pyglet==2.0.7
 Pygments==2.15.1
-pyobjc-core==9.1.1
-pyobjc-framework-Cocoa==9.1.1
 pyparsing==3.0.9
 pyrr==0.10.3
 python-dateutil==2.8.2
