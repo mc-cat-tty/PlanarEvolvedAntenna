@@ -8,13 +8,41 @@ from utils.geometry import Segment
 
 OUTPUT_DIRECTORY = "results"
 
-def speedRamp(x: float) -> float:
-  center = 1
-  plateau = 0.3
-  scaleY = 3
-  return np.exp(- (x - center)) / scaleY + plateau
+class Intro(ZoomedScene):
+  def construct(self):
+    title = Text("Planar Evolved Antenna")
+    subtitle = Text(
+      "Genetic algorithm for radiation pattern optimization",
+      t2c={
+        "Genetic algorithm": BLUE,
+        "radiation pattern": BLUE
+      }
+    )
+    
+    self.play(
+      Create(title)
+    )
+    self.wait()
 
-class RodIncrementalGen(ZoomedScene):
+
+    self.play(
+      Transform(title, subtitle),
+      self.camera.frame.animate.scale(1.3)
+    )
+    self.wait()
+
+    self.play(
+      Uncreate(title)
+    )
+    self.wait()
+
+class RodIncrementalGen(MovingCameraScene):
+  def speedRamp(self, x: float) -> float:
+    center = 1
+    plateau = 0.3
+    scaleY = 3
+    return np.exp(- (x - center)) / scaleY + plateau
+
   def construct(self):
     epoch = 4
     coordZ = (0,)
@@ -43,7 +71,7 @@ class RodIncrementalGen(ZoomedScene):
     self.wait()
 
     for i in range(5):
-      speedFactor = speedRamp(i)
+      speedFactor = self.speedRamp(i)
 
       polychain = [
         Line(geneSegment[0] + coordZ, geneSegment[1] + coordZ, stroke_color=GREEN_C, stroke_width=70)
