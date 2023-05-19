@@ -6,6 +6,9 @@ from typing import List
 from config import Config
 from core.gene import Gene
 
+import pickle
+from utils.amenities import saveSvg
+
 
 class Population:
   def __init__(self):
@@ -43,6 +46,18 @@ class Population:
     keeps only some of them according to the turnover rate
     """
     oldGenerationSize = len(self.population)
+
+    invalids = list(
+      filter(
+      lambda x: not x.isValid(),
+      self.population
+    ))
+
+    with open(f"results/invalid_{self.generationNumber}.pkl", "wb") as f:
+      pickle.dump(invalids, f)
+    
+    # with open(f"results/invalid_svg_{self.generationNumber}.svg", "w") as f:
+    #   saveSvg(f, invalids, True)
 
     self.population = list(
       filter(
