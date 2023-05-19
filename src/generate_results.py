@@ -16,9 +16,4 @@ if __name__ == "__main__":
   for generation, epoch in pop.generations():
     print(generation)
     with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "wb") as f:
-      pickle.dump([
-        [
-          segment.toList()
-          for segment in gene.getCartesianCoords()
-        ] for gene in generation
-      ], f)
+      pickle.dump(pop, f)
