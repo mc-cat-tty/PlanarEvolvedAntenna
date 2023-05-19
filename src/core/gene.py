@@ -97,17 +97,26 @@ class Gene:
   def setGroundPlaneDistance(self, gpDist: float) -> None:
     self.groundPlaneDistance = gpDist
 
+  def isSelfIntersecting(self):
+    return isSelfIntersectingPath(self.polychainEncoding)
+  
+  def doesIntersectInnerHole(self):
+    INNER_RADIUS = Config.ShapeConstraints.innerDiam / 2
+    return doesPathIntersectCircle(self.polychainEncoding, Point(Config.ShapeConstraints.centerShift, 0), INNER_RADIUS)
+  
+  def isInCircle(self):
+    OUTER_RADIUS = Config.ShapeConstraints.outerDiam / 2
+    return isPathInCircle(self.polychainEncoding, Point(0, 0), OUTER_RADIUS)
+
   def isValid(self) -> bool:
     """Returns true if the path is not slef-intersecting
     and doesn't come across the inner hole
     """
-    OUTER_RADIUS = Config.ShapeConstraints.outerDiam / 2
-    INNER_RADIUS = Config.ShapeConstraints.innerDiam / 2
     
     return (
-      not isSelfIntersectingPath(self.polychainEncoding) and
-      not doesPathIntersectCircle(self.polychainEncoding, Point(Config.ShapeConstraints.centerShift, 0), INNER_RADIUS) and
-      isPathInCircle(self.polychainEncoding, Point(0, 0), OUTER_RADIUS)
+      not self.isSelfIntersecting() and
+      not self.doesIntersectInnerHole() and
+      self.isInCircle()
     )
 
   def fitness(self) -> np.float16:
