@@ -1,5 +1,7 @@
 # Planar Evolved Antenna
-2-dimensional planar antenna optimized with genetic algorithms.
+2-dimensional planar antenna optimized with genetic algorithms + educational animation.
+
+Fork of [https://github.com/ITIS-Enrico-Fermi/PlanarEvolvedAntenna](https://github.com/ITIS-Enrico-Fermi/PlanarEvolvedAntenna)
 
 ## Objectives
 The main goal of this project is simulating the evolution of a planar antenna subject to space and shape constraints, in order to maximize isotropic gain of the "north" region (toward theta = 0, standar spherical coordinates) and minimize backlobes propagation in the south region. The simulation is carried out through a genetic algorithm framed as described in the following paragraphs.
