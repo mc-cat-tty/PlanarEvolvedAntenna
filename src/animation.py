@@ -34,12 +34,11 @@ class Player:
   
   def updateButton(self, targetButton: SVGMobject) -> AnimationGroup:
     a = AnimationGroup(
-      Indicate(targetButton, color = WHITE, scale_factor = 0.5),
       Indicate(self.currentButton, color = WHITE, scale_factor = 0.5),
       Transform(self.currentButton, targetButton),
       run_time = self.animRunTime
     )
-    self.currentButton = self.stop
+    self.currentButton = targetButton
     return a
 
   def buttonToStop(self) -> AnimationGroup:
@@ -129,13 +128,15 @@ class RodIncrementalGene(MovingCameraScene):
         np.array(geneSegment[0] + coordZ) / SCALE_K,
         np.array(geneSegment[1] + coordZ) / SCALE_K,
         stroke_color=GREEN_C,
-        stroke_width=70/SCALE_K
+        stroke_width=70 / SCALE_K
       )
       for geneSegment in generationSegments
     ]
 
+    targetTxt = self.geneIdTxt.copy()
+    targetTxt.text = f"Gene ID: {id}"
     animations: Succession = Succession(
-      Transform(self.geneIdTxt, Text(f"Gene ID: {id}").to_corner(UL), run_time=speedFactor),
+      Transform(self.geneIdTxt, targetTxt, run_time=speedFactor),
       *[Create(segment, run_time=0.51 * random.random() * speedFactor) for segment in polychain],
     )
 
@@ -149,8 +150,6 @@ class RodIncrementalGene(MovingCameraScene):
     epoch = 3
     geneId = 0
     itNum = 51
-    self.geneIdTxt = Text(f"Gene ID: {geneId}").to_corner(UL)
-    self.validTxt = Text("Valid?").next_to(self.geneIdTxt, DOWN)
 
     """
     Show player
@@ -161,19 +160,24 @@ class RodIncrementalGene(MovingCameraScene):
     """
     Show problem constraints
     """
-    outerCircle = Circle(radius=33/SCALE_K)
-    innerCircle = Circle(radius=2.5/SCALE_K)
+    outerCircle = Circle(radius = 33/SCALE_K)
+    innerCircle = Circle(radius = 2.5/SCALE_K)
     innerCircle.shift((5.6 / SCALE_K, 0, 0))
+    self.constraints = Cutout(
+      outerCircle,
+      innerCircle,
+      fill_opacity = 0.5,
+      color = BLUE,
+      stroke_color = RED,
+      stroke_width = 40/SCALE_K
+    )
+
+    self.validTxt = Text("Valid?", font_size = DEFAULT_FONT_SIZE*0.8).next_to(self.constraints, UP)
+    self.geneIdTxt = Text(f"Gene ID: {geneId}", font_size = DEFAULT_FONT_SIZE*0.8).next_to(self.validTxt, UP)
+    constraintsGroup = VGroup(self.constraints, self.geneIdTxt, self.validTxt)
     self.play(
       Write(
-        Cutout(
-          outerCircle,
-          innerCircle,
-          fill_opacity=0.5,
-          color=BLUE,
-          stroke_color=RED,
-          stroke_width=40/SCALE_K
-        ),
+        self.constraints,
         run_time=2
       ),
       Write(
@@ -195,10 +199,25 @@ class RodIncrementalGene(MovingCameraScene):
     with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "rb") as f:
       pop: Population = pickle.load(f)
 
-    for i in range(geneId, 2):
+    polychainToLeft = False
+    for i in range(geneId, 3):
+      if geneId == 2:
+        content = [[self.constraints.copy() for _ in range(8)] for _ in range(9)]
+        self.play(
+          Create(
+            MobjectTable(
+              content
+            ).scale(0.12).to_edge(RIGHT)
+          ),
+          constraintsGroup.animate.to_edge(LEFT)
+        )
+        
+        polychainToLeft = True
+      
       speedFactor = self.expSpeedRamp(i)
 
       g, createAnim = self.createGene(pop.population[i], geneId, speedFactor)
+      if polychainToLeft: g.to_edge(LEFT)
 
       self.play(createAnim, player.toProgress(geneId / itNum))
 
@@ -209,7 +228,6 @@ class RodIncrementalGene(MovingCameraScene):
       self.wait(0.5)
       geneId += 1
     
-
     """
     Load wrong genes and show their generation and denstruction
     """
@@ -223,6 +241,7 @@ class RodIncrementalGene(MovingCameraScene):
     ]
     for idx in invalidIdxs:
       g, createAnim = self.createGene(invalids[idx], geneId, 0.5)
+      g.to_edge(LEFT)
       self.play(createAnim, player.toProgress(geneId / itNum))
       self.play(
         Succession(
@@ -240,15 +259,16 @@ class RodIncrementalGene(MovingCameraScene):
       self.wait(0.5)
 
       geneId += 1
-    return
+    
     """
     Fast forward
     """
     for i in range(geneId, itNum):
-      if geneId == 6: self.play(player.buttonToFastForward())
+      if geneId == 6: self.play(player.buttonToFastForward()); return
 
       speedFactor = -smooth(i*4 / itNum) + 1.1
       g, createAnim = self.createGene(pop.population[i], geneId, speedFactor)
+      g.to_edge(LEFT)
       self.play(createAnim, player.toProgress((geneId + 1) / itNum), run_time = createAnim.run_time)
       
       self.play(
