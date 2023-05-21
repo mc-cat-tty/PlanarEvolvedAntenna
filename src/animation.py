@@ -1,16 +1,86 @@
 import pickle
 import random
-from tkinter import BOTTOM
-from turtle import circle
+import sys
 from manim import *
 from os.path import join
-from typing import List
+from typing import List, Tuple
 from core.population import Population
 from core.gene import Gene
 from config import Config
 
 OUTPUT_DIRECTORY = "results"
 SCALE_K = 15
+
+# Text.set_default(font = "Inter")
+
+class Player:  
+  def __init__(self, width: float, height: float, startProgress: float = 0, startGen: int = 0, endGen: int = 1):
+    self.width = width
+    self.height = height
+    self.progress = startProgress
+    self.stop = SVGMobject(file_name = join("..", "vectors", "stop.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
+    self.play = SVGMobject(file_name = join("..", "vectors", "play.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
+    self.pause = SVGMobject(file_name = join("..", "vectors", "pause.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
+    self.fastForward = SVGMobject(file_name = join("..", "vectors", "fast_forward.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
+    self.currentButton = self.stop
+    self.lastBuild = None
+    self.animRunTime = 0.5
+    self.startGen = startGen
+    self.endGen = endGen
+
+  def withProgress(self, progress: float):
+    self.progress = progress
+    return self
+  
+  def updateButton(self, targetButton: SVGMobject) -> AnimationGroup:
+    a = AnimationGroup(
+      Indicate(targetButton, color = WHITE, scale_factor = 0.5),
+      Indicate(self.currentButton, color = WHITE, scale_factor = 0.5),
+      Transform(self.currentButton, targetButton),
+      run_time = self.animRunTime
+    )
+    self.currentButton = self.stop
+    return a
+
+  def buttonToStop(self) -> AnimationGroup:
+    return self.updateButton(self.stop)
+    
+  def buttonToPlay(self) -> AnimationGroup:
+    return self.updateButton(self.play)
+    
+  def buttonToPause(self) -> AnimationGroup:
+    return self.updateButton(self.pause)
+    
+  def buttonToFastForward(self) -> AnimationGroup:
+    return self.updateButton(self.fastForward)
+  
+  def withStartGen(self, startGen: int):
+    self.startGen
+    return self
+  
+  def withEndGen(self, endGen: int):
+    self.endGen = endGen
+    return self
+  
+  def buildMobj(self) -> VGroup:
+    progressBarOutline = RoundedRectangle(corner_radius = 0.08, height = self.height, width = self.width).next_to(self.currentButton, DOWN)
+    progressBarFill = RoundedRectangle(
+      corner_radius = 0.08,
+      height = self.height,
+      width = self.width * (self.progress + 1e-3),
+      fill_color = GRAY,
+      fill_opacity = 1,
+      stroke_width = 0
+    ).next_to(self.currentButton, DOWN).align_to(progressBarOutline, LEFT)
+    startGenText = Text(f"Gen {self.startGen}", height = self.height).next_to(progressBarOutline, LEFT)
+    endGenText = Text(f"Gen {self.endGen}", height = self.height).next_to(progressBarOutline, RIGHT)
+    g =  VGroup(self.currentButton, progressBarFill, progressBarOutline, startGenText, endGenText)
+    self.lastBuild = g
+    return g
+  
+  def toProgress(self, progress: float) -> Animation:
+    self.progress = progress
+    return Transform(self.lastBuild, self.buildMobj())
 
 class Intro(ZoomedScene):
   def construct(self):
@@ -40,14 +110,14 @@ class Intro(ZoomedScene):
     )
     self.wait()
 
-class RodIncrementalGen(MovingCameraScene):
-  def speedRamp(self, x: float) -> float:
+class RodIncrementalGene(MovingCameraScene):
+  def expSpeedRamp(self, x: float) -> float:
     center = 1
     plateau = 0.3
     scaleY = 3
     return np.exp(- (x - center)) / scaleY + plateau
 
-  def createGene(self, gene: Gene, id: int, speedFactor: float) -> VGroup:
+  def createGene(self, gene: Gene, id: int, speedFactor) -> Tuple[VGroup, Succession]:
     coordZ = (0,)
     generationSegments = [
       segment.toList()
@@ -64,12 +134,12 @@ class RodIncrementalGen(MovingCameraScene):
       for geneSegment in generationSegments
     ]
 
-    self.play(Transform(self.geneIdTxt, Text(f"Gene ID: {id}").to_corner(UL)))
+    animations: Succession = Succession(
+      Transform(self.geneIdTxt, Text(f"Gene ID: {id}").to_corner(UL), run_time=speedFactor),
+      *[Create(segment, run_time=0.51 * random.random() * speedFactor) for segment in polychain],
+    )
 
-    [self.play(Create(segment), run_time=0.51 * speedFactor * random.random()) for j, segment in enumerate(polychain)]
-    self.wait()
-
-    return VGroup(*polychain)
+    return VGroup(*polychain), animations
 
 
   def construct(self):
@@ -78,8 +148,15 @@ class RodIncrementalGen(MovingCameraScene):
 
     epoch = 3
     geneId = 0
+    itNum = 51
     self.geneIdTxt = Text(f"Gene ID: {geneId}").to_corner(UL)
     self.validTxt = Text("Valid?").next_to(self.geneIdTxt, DOWN)
+
+    """
+    Show player
+    """
+    player = Player(10, 0.2)
+    self.add(player.buildMobj())
 
     """
     Show problem constraints
@@ -110,6 +187,8 @@ class RodIncrementalGen(MovingCameraScene):
     )
     self.wait()
 
+    self.play(player.buttonToPlay())
+
     """
     Load population and show some good gene generation
     """
@@ -117,22 +196,24 @@ class RodIncrementalGen(MovingCameraScene):
       pop: Population = pickle.load(f)
 
     for i in range(geneId, 2):
-      speedFactor = self.speedRamp(i)
+      speedFactor = self.expSpeedRamp(i)
 
-      g = self.createGene(pop.population[i], geneId, speedFactor)
+      g, createAnim = self.createGene(pop.population[i], geneId, speedFactor)
+
+      self.play(createAnim, player.toProgress(geneId / itNum))
 
       self.play(
         Indicate(self.validTxt, color=GREEN),
+        FadeOut(g)
       )
-
-      self.play(FadeOut(g), run_time=0.7 * speedFactor)
-      self.wait()
+      self.wait(0.5)
       geneId += 1
+    
 
     """
     Load wrong genes and show their generation and denstruction
     """
-    with open(join(OUTPUT_DIRECTORY, f"invalid_{epoch}.pkl"), "rb") as f:
+    with open(join(OUTPUT_DIRECTORY, f"invalids.pkl"), "rb") as f:
       invalids: List[Gene] = pickle.load(f)
     
     invalidIdxs = [
@@ -141,32 +222,40 @@ class RodIncrementalGen(MovingCameraScene):
       30  # Self intersecter
     ]
     for idx in invalidIdxs:
-      g = self.createGene(invalids[idx], geneId, 1)
-
+      g, createAnim = self.createGene(invalids[idx], geneId, 0.5)
+      self.play(createAnim, player.toProgress(geneId / itNum))
       self.play(
-        Indicate(self.validTxt, color=RED),
+        Succession(
+          *[FadeToColor(g, color = RED if i%2 == 0 else GREEN, run_time=0.3) for i in range(5)]
+        )
+      )
+      self.play(
+        Succession(
+          FadeToColor(self.validTxt, color = RED),
+          FadeToColor(self.validTxt, color = WHITE, run_time = 0.5)
+        ),
+        Wiggle(self.validTxt),
+        Uncreate(g)
+      )
+      self.wait(0.5)
+
+      geneId += 1
+    return
+    """
+    Fast forward
+    """
+    for i in range(geneId, itNum):
+      if geneId == 6: self.play(player.buttonToFastForward())
+
+      speedFactor = -smooth(i*4 / itNum) + 1.1
+      g, createAnim = self.createGene(pop.population[i], geneId, speedFactor)
+      self.play(createAnim, player.toProgress((geneId + 1) / itNum), run_time = createAnim.run_time)
+      
+      self.play(
+        Indicate(self.validTxt, color = GREEN, run_time = speedFactor),
+        FadeOut(g, run_time = 0.7 * speedFactor)
       )
 
-      [self.play(FadeToColor(g, color = RED if i%2 == 0 else GREEN), run_time=0.3) for i in range(4)]
-
-      self.play(
-        Uncreate(g),
-        FadeToColor(g, color=RED),
-        run_time=0.3
-      )
-      self.wait()
-
+      self.wait(speedFactor)
       geneId += 1
     
-    for i in range(geneId, 100):
-      speedFactor = self.speedRamp(i) * 0.1
-
-      g = self.createGene(pop.population[i], geneId, speedFactor)
-
-      self.play(
-        Indicate(self.validTxt, color=GREEN),
-      )
-
-      self.play(FadeOut(g), run_time=0.7 * speedFactor)
-      self.wait()
-      geneId += 1
