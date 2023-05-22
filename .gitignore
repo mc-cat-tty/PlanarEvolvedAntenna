@@ -1,6 +1,6 @@
 venv/
 __pycache__/
 animation/
+media/
 .DS_Store
 *.pkl
-*.mp4
