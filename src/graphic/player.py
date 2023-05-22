@@ -55,7 +55,9 @@ class Player:
   
   def toTrackText(self, txt: str) -> Animation:
     targetTxt = Text(txt, height = self.controlsHeight, font = "Inter", weight = SEMIBOLD).next_to(self.progressBarOutline, DOWN, buff = MED_SMALL_BUFF)
-    return FadeTransform(self.trackText, targetTxt)
+    a = Transform(self.trackText, targetTxt)
+    self.trackText = targetTxt
+    return a
   
   def buildMobj(self) -> VGroup:
     self.progressBarOutline = RoundedRectangle(corner_radius = 0.08, height = self.height, width = self.width).next_to(self.currentButton, DOWN)
