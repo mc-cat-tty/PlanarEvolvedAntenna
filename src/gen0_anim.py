@@ -68,7 +68,7 @@ class Gen0(MovingCameraScene):
     self.wait()
 
     self.play(
-      player.buttonToPlay(),
+      player.buttonToPause(),
       player.toTrackText("Genes random generation")
     )
 
@@ -192,20 +192,34 @@ class Gen0(MovingCameraScene):
     ))
     self.wait()
 
-    return
     """
     Fast forward
     """
     for i in range(geneId, itNum):
-      if geneId == 6: self.play(player.buttonToFastForward())
+      if geneId == 6: self.play(player.showFastForward()); return
 
+      """Generate gene
+      """
       speedFactor = -smooth(i*4 / itNum) + 1.1
       gene = GeneG(pop.population[i], geneId)
       g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
       createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
       g.to_edge(LEFT)
-      self.play(createAnim, player.toProgress((geneId + 1) / itNum), run_time = createAnim.run_time)
       
+      """Plot radiation patter (3d, spherical coordinates)
+      """
+      axes = ThreeDAxes()
+      self.set_camera_orientation(phi = 75 * DEGREES, theta = 30 * DEGREES)
+      self.add(axes)
+
+      self.play(
+        createAnim,
+        player.toProgress((geneId + 1) / itNum),
+        run_time = createAnim.run_time
+      )
+      
+      """Move gene to table
+      """
       miniatureShift = - (outerCircle.width - g.width) * 0.12 / 2
       g.generate_target()
       [line.set_stroke(width = 70 * SCALE_K * 0.12 * 2) for line in g.target]
