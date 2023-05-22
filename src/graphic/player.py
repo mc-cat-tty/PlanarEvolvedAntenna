@@ -2,19 +2,23 @@ from manim import *
 from os.path import join
 
 class Player:  
-  def __init__(self, width: float, height: float, startProgress: float = 0, startGen: int = 0, endGen: int = 1):
+  def __init__(self, width: float, height: float, controlsHeight: float = 0.5, startProgress: float = 0, startGen: int = 0, endGen: int = 1, trackText: str = "Genes random generation"):
     self.width = width
     self.height = height
     self.progress = startProgress
-    self.stop = SVGMobject(file_name = join("..", "vectors", "stop.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
-    self.play = SVGMobject(file_name = join("..", "vectors", "play.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
-    self.pause = SVGMobject(file_name = join("..", "vectors", "pause.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
-    self.fastForward = SVGMobject(file_name = join("..", "vectors", "fast_forward.svg"), height = 0.5).to_edge(DOWN).shift((0, self.height , 0))
+    self.controlsHeight = controlsHeight
+    self.stop = SVGMobject(file_name = join("..", "vectors", "stop.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
+    self.play = SVGMobject(file_name = join("..", "vectors", "play.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
+    self.pause = SVGMobject(file_name = join("..", "vectors", "pause.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
+    self.fastForward = SVGMobject(file_name = join("..", "vectors", "fast_forward.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
     self.currentButton = self.stop
+    self.backward = SVGMobject(file_name = join("..", "vectors", "backward.svg"), height = self.controlsHeight * 3/5).next_to(self.currentButton, LEFT, buff = MED_LARGE_BUFF).shift((0, self.height - self.controlsHeight * 3/5, 0))
+    self.forward = SVGMobject(file_name = join("..", "vectors", "forward.svg"), height = self.controlsHeight * 3/5).next_to(self.currentButton, RIGHT, buff = MED_LARGE_BUFF).shift((0, self.height - self.controlsHeight * 3/5, 0))
     self.lastBuild = None
     self.animRunTime = 0.5
     self.startGen = startGen
     self.endGen = endGen
+    self.trackText = trackText
 
   def withProgress(self, progress: float):
     self.progress = progress
@@ -49,6 +53,10 @@ class Player:
     self.endGen = endGen
     return self
   
+  def withTrackText(self, text: str):
+    self.trackText = text
+    return self
+  
   def buildMobj(self) -> VGroup:
     progressBarOutline = RoundedRectangle(corner_radius = 0.08, height = self.height, width = self.width).next_to(self.currentButton, DOWN)
     progressBarFill = RoundedRectangle(
@@ -59,9 +67,10 @@ class Player:
       fill_opacity = 1,
       stroke_width = 0
     ).next_to(self.currentButton, DOWN).align_to(progressBarOutline, LEFT)
-    startGenText = Text(f"Gen {self.startGen}", height = self.height).next_to(progressBarOutline, LEFT)
-    endGenText = Text(f"Gen {self.endGen}", height = self.height).next_to(progressBarOutline, RIGHT)
-    g =  VGroup(self.currentButton, progressBarFill, progressBarOutline, startGenText, endGenText)
+    startGenText = Text(f"Gen {self.startGen}", height = self.height, font = "Inter").next_to(progressBarOutline, LEFT)
+    endGenText = Text(f"Gen {self.endGen}", height = self.height, font = "Inter").next_to(progressBarOutline, RIGHT)
+    trackText = Text(self.trackText, height = self.controlsHeight, font = "Inter", weight = SEMIBOLD).next_to(progressBarOutline, DOWN, buff = MED_SMALL_BUFF)
+    g =  VGroup(self.currentButton, self.backward, self.forward, progressBarFill, progressBarOutline, startGenText, endGenText, trackText)
     self.lastBuild = g
     return g
   

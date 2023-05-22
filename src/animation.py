@@ -10,7 +10,7 @@ from core.population import Population
 from core.gene import Gene
 
 OUTPUT_DIRECTORY = "results"
-SCALE_K = 1 / 15
+SCALE_K = 1 / 20
 
 # Text.set_default(font = "Inter")
 
@@ -55,12 +55,12 @@ class RodIncrementalGene(MovingCameraScene):
 
     epoch = 3
     geneId = 0
-    itNum = 69
+    itNum = 61
 
     """
     Show player
     """
-    player = Player(10, 0.2)
+    player = Player(10, 0.2, 0.3)
     self.add(player.buildMobj())
 
     """
@@ -106,7 +106,7 @@ class RodIncrementalGene(MovingCameraScene):
       pop: Population = pickle.load(f)
     
     cols = 8
-    rows = 9
+    rows = 8
     tableCreated = False
     content = [[self.constraints.copy() for _ in range(cols)] for _ in range(rows)]
 
@@ -116,7 +116,7 @@ class RodIncrementalGene(MovingCameraScene):
           content,
           include_outer_lines=True
         ).scale(0.12).to_edge(RIGHT)
-        generationTxt = Text(f"Generation {epoch}").next_to(geneTable, UP)
+        generationTxt = Text(f"Generation {epoch}").scale(0.8).next_to(geneTable, UP)
         geneTableGroup = VGroup(generationTxt, geneTable)
         self.play(
           Create(geneTable),
@@ -211,7 +211,7 @@ class RodIncrementalGene(MovingCameraScene):
       self.wait(0.5)
 
       geneId += 1
-    
+
     """
     Fast forward
     """
