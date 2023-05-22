@@ -5,11 +5,12 @@ from os.path import join
 from typing import List, Tuple
 from config import Config
 from graphic.player import Player
+from graphic.gene_g import GeneG
 from core.population import Population
 from core.gene import Gene
 
 OUTPUT_DIRECTORY = "results"
-SCALE_K = 15
+SCALE_K = 1 / 15
 
 # Text.set_default(font = "Inter")
 
@@ -48,40 +49,13 @@ class RodIncrementalGene(MovingCameraScene):
     scaleY = 3
     return np.exp(- (x - center)) / scaleY + plateau
 
-  def createGene(self, gene: Gene, id: int, speedFactor) -> Tuple[VGroup, Succession]:
-    coordZ = (0,)
-    generationSegments = [
-      segment.toList()
-      for segment in gene.getCartesianCoords()
-    ]
-
-    polychain = [
-      Line(
-        np.array(geneSegment[0] + coordZ) / SCALE_K,
-        np.array(geneSegment[1] + coordZ) / SCALE_K,
-        stroke_color=GREEN_C,
-        stroke_width=70 / SCALE_K
-      )
-      for geneSegment in generationSegments
-    ]
-
-    targetTxt = self.geneIdTxt.copy()
-    targetTxt.text = f"Gene ID: {id}"
-    animations: Succession = Succession(
-      Transform(self.geneIdTxt, targetTxt, run_time=speedFactor),
-      *[Create(segment, run_time=0.51 * random.random() * speedFactor) for segment in polychain],
-    )
-
-    return VGroup(*polychain), animations
-
-
   def construct(self):
     with open("config.yaml", "r") as f:
       Config.loadYaml(f)
 
     epoch = 3
     geneId = 0
-    itNum = 51
+    itNum = 69
 
     """
     Show player
@@ -92,20 +66,20 @@ class RodIncrementalGene(MovingCameraScene):
     """
     Show problem constraints
     """
-    outerCircle = Circle(radius = 33/SCALE_K)
-    innerCircle = Circle(radius = 2.5/SCALE_K)
-    innerCircle.shift((5.6 / SCALE_K, 0, 0))
+    outerCircle = Circle(radius = 33 * SCALE_K)
+    innerCircle = Circle(radius = 2.5 * SCALE_K)
+    innerCircle.shift((5.6 * SCALE_K, 0, 0))
     self.constraints = Cutout(
       outerCircle,
       innerCircle,
       fill_opacity = 0.5,
       color = BLUE,
       stroke_color = RED,
-      stroke_width = 40/SCALE_K
+      stroke_width = 40 * SCALE_K
     )
 
-    self.validTxt = Text("Valid?", font_size = DEFAULT_FONT_SIZE*0.8).next_to(self.constraints, UP)
-    self.geneIdTxt = Text(f"Gene ID: {geneId}", font_size = DEFAULT_FONT_SIZE*0.8).next_to(self.validTxt, UP)
+    self.validTxt = Text("Valid?").scale(0.8).next_to(self.constraints, UP)
+    self.geneIdTxt = Text(f"Gene ID: {geneId}").scale(0.8).next_to(self.validTxt, UP)
     constraintsGroup = VGroup(self.constraints, self.geneIdTxt, self.validTxt)
     self.play(
       Write(
@@ -130,33 +104,61 @@ class RodIncrementalGene(MovingCameraScene):
     """
     with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "rb") as f:
       pop: Population = pickle.load(f)
+    
+    cols = 8
+    rows = 9
+    tableCreated = False
+    content = [[self.constraints.copy() for _ in range(cols)] for _ in range(rows)]
 
-    polychainToLeft = False
     for i in range(geneId, 3):
       if geneId == 2:
-        content = [[self.constraints.copy() for _ in range(8)] for _ in range(9)]
+        geneTable = MobjectTable(
+          content,
+          include_outer_lines=True
+        ).scale(0.12).to_edge(RIGHT)
+        generationTxt = Text(f"Generation {epoch}").next_to(geneTable, UP)
+        geneTableGroup = VGroup(generationTxt, geneTable)
         self.play(
-          Create(
-            MobjectTable(
-              content
-            ).scale(0.12).to_edge(RIGHT)
-          ),
+          Create(geneTable),
+          Create(generationTxt),
           constraintsGroup.animate.to_edge(LEFT)
         )
         
-        polychainToLeft = True
+        tableCreated = True
       
       speedFactor = self.expSpeedRamp(i)
 
-      g, createAnim = self.createGene(pop.population[i], geneId, speedFactor)
-      if polychainToLeft: g.to_edge(LEFT)
+      gene = GeneG(pop.population[i], geneId)
+      g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
+      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
+      if tableCreated: g.to_edge(LEFT)
 
       self.play(createAnim, player.toProgress(geneId / itNum))
 
-      self.play(
-        Indicate(self.validTxt, color=GREEN),
-        FadeOut(g)
-      )
+      miniatureShift = - (outerCircle.width - g.width) * 0.12 / 2
+      if not tableCreated:
+        self.play(
+          Indicate(self.validTxt, color=GREEN),
+          FadeOut(g)
+        )
+        [line.set_stroke(width = 70 * SCALE_K * 0.12 * 2) for line in g]
+        content[geneId // cols][geneId % cols].add(g)
+        
+      else:
+        g.generate_target()
+        [line.set_stroke(width = 70 * SCALE_K * 0.12 * 2) for line in g.target]
+        g.target.move_to(
+          geneTable.get_cell((
+            geneId // cols + 1,
+            geneId % cols + 1
+          )).get_center_of_mass()
+        ).shift((miniatureShift, 0, 0)).scale(0.12)
+
+        self.play(
+          Indicate(self.validTxt, color=GREEN),
+          MoveToTarget(g)
+        )
+        
       self.wait(0.5)
       geneId += 1
     
@@ -171,22 +173,40 @@ class RodIncrementalGene(MovingCameraScene):
       94,  # Inner hole intersecter
       30  # Self intersecter
     ]
-    for idx in invalidIdxs:
-      g, createAnim = self.createGene(invalids[idx], geneId, 0.5)
+    invalidTxt = [
+      "Overflow",
+      "Self-intersecting",
+      "Hole-intersecting"
+    ]
+    for idx, txt in zip(invalidIdxs, invalidTxt):
+      gene = GeneG(invalids[idx], geneId)
+      g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
+      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
       g.to_edge(LEFT)
       self.play(createAnim, player.toProgress(geneId / itNum))
+
+      t = Text(txt, color = RED).next_to(self.constraints, RIGHT).rotate(angle = -PI/2).shift(LEFT)
       self.play(
         Succession(
           *[FadeToColor(g, color = RED if i%2 == 0 else GREEN, run_time=0.3) for i in range(5)]
-        )
+        ),
+        Create(t)
       )
+      
+      highlight = geneTable.get_highlighted_cell((
+          geneId // cols + 1,
+          geneId % cols + 1
+      ), color = RED)
+      geneTable.add_to_back(highlight)
+
       self.play(
         Succession(
           FadeToColor(self.validTxt, color = RED),
           FadeToColor(self.validTxt, color = WHITE, run_time = 0.5)
         ),
         Wiggle(self.validTxt),
-        Uncreate(g)
+        Uncreate(g),
+        Uncreate(t)
       )
       self.wait(0.5)
 
@@ -196,16 +216,28 @@ class RodIncrementalGene(MovingCameraScene):
     Fast forward
     """
     for i in range(geneId, itNum):
-      if geneId == 6: self.play(player.buttonToFastForward()); return
+      if geneId == 6: self.play(player.buttonToFastForward())
 
       speedFactor = -smooth(i*4 / itNum) + 1.1
-      g, createAnim = self.createGene(pop.population[i], geneId, speedFactor)
+      gene = GeneG(pop.population[i], geneId)
+      g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
+      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
       g.to_edge(LEFT)
       self.play(createAnim, player.toProgress((geneId + 1) / itNum), run_time = createAnim.run_time)
       
+      miniatureShift = - (outerCircle.width - g.width) * 0.12 / 2
+      g.generate_target()
+      [line.set_stroke(width = 70 * SCALE_K * 0.12 * 2) for line in g.target]
+      g.target.move_to(
+        geneTable.get_cell((
+          geneId // cols + 1,
+          geneId % cols + 1
+        )).get_center_of_mass()
+      ).shift((miniatureShift, 0, 0)).scale(0.12)
+
       self.play(
         Indicate(self.validTxt, color = GREEN, run_time = speedFactor),
-        FadeOut(g, run_time = 0.7 * speedFactor)
+        MoveToTarget(g, run_time = 1.5 * speedFactor)
       )
 
       self.wait(speedFactor)

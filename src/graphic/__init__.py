@@ -1,1 +1,1 @@
-__all__ = "player"
+__all__ = ["player", "gene_g"]

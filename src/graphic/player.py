@@ -22,7 +22,7 @@ class Player:
   
   def updateButton(self, targetButton: SVGMobject) -> AnimationGroup:
     a = AnimationGroup(
-      Indicate(self.currentButton, color = WHITE, scale_factor = 0.5),
+      Indicate(targetButton, color = WHITE, scale_factor = 0.5),
       Transform(self.currentButton, targetButton),
       run_time = self.animRunTime
     )
