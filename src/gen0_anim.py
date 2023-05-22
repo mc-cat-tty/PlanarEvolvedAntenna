@@ -1,48 +1,18 @@
 import pickle
-import random
 from manim import *
 from os.path import join
-from typing import List, Tuple
-from config import Config
-from graphic.player import Player
-from graphic.gene_g import GeneG
+from typing import List
+from core.config import Config
 from core.population import Population
 from core.gene import Gene
+from graphic.player import Player
+from graphic.gene_g import GeneG
 
 OUTPUT_DIRECTORY = "results"
 SCALE_K = 1 / 20
 
-# Text.set_default(font = "Inter")
 
-class Intro(ZoomedScene):
-  def construct(self):
-    title = Text("Planar Evolved Antenna")
-    subtitle = Text(
-      "Genetic algorithm for radiation pattern optimization",
-      t2c={
-        "Genetic algorithm": BLUE,
-        "radiation pattern": BLUE
-      }
-    )
-    
-    self.play(
-      Create(title)
-    )
-    self.wait()
-
-
-    self.play(
-      Transform(title, subtitle),
-      self.camera.frame.animate.scale(1.3)
-    )
-    self.wait()
-
-    self.play(
-      Uncreate(title)
-    )
-    self.wait()
-
-class RodIncrementalGene(MovingCameraScene):
+class Gen0(MovingCameraScene):
   def expSpeedRamp(self, x: float) -> float:
     center = 1
     plateau = 0.3
@@ -214,6 +184,14 @@ class RodIncrementalGene(MovingCameraScene):
       self.wait(0.5)
 
       geneId += 1
+    
+    
+    self.play(Transform(
+      self.validTxt,
+      Text(f"Fitness: {10}").scale(0.8).next_to(self.constraints, UP)
+    ))
+    self.wait()
+
     return
     """
     Fast forward

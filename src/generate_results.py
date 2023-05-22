@@ -2,7 +2,7 @@
 
 import pickle
 from os.path import join
-from config import Config
+from core.config import Config
 from core.population import Population
 
 CONFIG_FILENAME = "config.yaml"
