@@ -11,7 +11,7 @@ class Player:
     self.play = SVGMobject(file_name = join("..", "vectors", "play.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
     self.pause = SVGMobject(file_name = join("..", "vectors", "pause.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
     self.fastForward = SVGMobject(file_name = join("..", "vectors", "fast_forward.svg"), height = self.controlsHeight*1.5).to_corner(UR)
-    self.currentButton = self.play
+    self.currentButton = self.play.copy()
     self.backward = SVGMobject(file_name = join("..", "vectors", "backward.svg"), height = self.controlsHeight * 3/5).next_to(self.currentButton, LEFT, buff = MED_LARGE_BUFF).shift((0, self.height - self.controlsHeight * 3/5, 0))
     self.forward = SVGMobject(file_name = join("..", "vectors", "forward.svg"), height = self.controlsHeight * 3/5).next_to(self.currentButton, RIGHT, buff = MED_LARGE_BUFF).shift((0, self.height - self.controlsHeight * 3/5, 0))
     self.lastBuild = None
@@ -25,21 +25,19 @@ class Player:
     return self
   
   def updateButton(self, targetButton: SVGMobject) -> AnimationGroup:
-    a = AnimationGroup(
+    return AnimationGroup(
       Transform(self.currentButton, targetButton),
       run_time = self.animRunTime
     )
-    self.currentButton = targetButton
-    return a
 
   def buttonToStop(self) -> AnimationGroup:
-    return self.updateButton(self.stop)
+    return self.updateButton(self.stop.copy())
     
   def buttonToPlay(self) -> AnimationGroup:
-    return self.updateButton(self.play)
+    return self.updateButton(self.play.copy())
     
   def buttonToPause(self) -> AnimationGroup:
-    return self.updateButton(self.pause)
+    return self.updateButton(self.pause.copy())
     
   def showFastForward(self) -> AnimationGroup:
     return FadeIn(self.fastForward)

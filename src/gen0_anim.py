@@ -103,7 +103,7 @@ class Gen0(MovingCameraScene):
 
       gene = GeneG(pop.population[i], geneId)
       g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
-      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
+      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt, geneId)
       if tableCreated: g.to_edge(LEFT)
 
       self.play(createAnim, player.toProgress(geneId / itNum))
@@ -154,7 +154,7 @@ class Gen0(MovingCameraScene):
     for idx, txt in zip(invalidIdxs, invalidTxt):
       gene = GeneG(invalids[idx], geneId)
       g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
-      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
+      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt, geneId)
       g.to_edge(LEFT)
       self.play(createAnim, player.toProgress(geneId / itNum))
 
@@ -188,35 +188,40 @@ class Gen0(MovingCameraScene):
     
     self.play(Transform(
       self.validTxt,
-      Text(f"Fitness: {10}").scale(0.8).next_to(self.constraints, UP)
+      Text("Fitness: xx.xx").scale(0.8).next_to(self.constraints, UP)
     ))
     self.wait()
+
+    """
+    Show radiation pattern (another, external, scene)
+    """
+    self.play(
+      player.buttonToPlay()
+    )
+    self.play(
+      self.camera.frame.animate.scale(0.2)
+    )
+    self.wait()
+    self.play(
+      self.camera.frame.animate.scale(5)
+    )
+    self.play(
+      player.buttonToPause()
+    )
 
     """
     Fast forward
     """
     for i in range(geneId, itNum):
-      if geneId == 6: self.play(player.showFastForward()); return
+      if geneId == 8: self.play(player.showFastForward()); return
 
       """Generate gene
       """
       speedFactor = -smooth(i*4 / itNum) + 1.1
       gene = GeneG(pop.population[i], geneId)
       g = gene.withScale(SCALE_K).withStrokeWidth(70).build()
-      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt)
+      createAnim = gene.withSpeedFactor(speedFactor).getCreateAnims(self.geneIdTxt, geneId)
       g.to_edge(LEFT)
-      
-      """Plot radiation patter (3d, spherical coordinates)
-      """
-      axes = ThreeDAxes()
-      self.set_camera_orientation(phi = 75 * DEGREES, theta = 30 * DEGREES)
-      self.add(axes)
-
-      self.play(
-        createAnim,
-        player.toProgress((geneId + 1) / itNum),
-        run_time = createAnim.run_time
-      )
       
       """Move gene to table
       """
@@ -231,7 +236,7 @@ class Gen0(MovingCameraScene):
       ).shift((miniatureShift, 0, 0)).scale(0.12)
 
       self.play(
-        Indicate(self.validTxt, color = GREEN, run_time = speedFactor),
+        # Indicate(self.validTxt, color = GREEN, run_time = speedFactor),
         MoveToTarget(g, run_time = 1.5 * speedFactor)
       )
 
