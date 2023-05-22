@@ -7,6 +7,7 @@ from core.population import Population
 from core.gene import Gene
 from graphic.player import Player
 from graphic.gene_g import GeneG
+from graphic.loaders import loadPop
 
 OUTPUT_DIRECTORY = "results"
 SCALE_K = 1 / 20
@@ -75,8 +76,7 @@ class Gen0(MovingCameraScene):
     """
     Load population and show some good gene generation
     """
-    with open(join(OUTPUT_DIRECTORY, f"epoch_{epoch}.pkl"), "rb") as f:
-      pop: Population = pickle.load(f)
+    pop = loadPop(epoch)
     
     cols = 8
     rows = 8
