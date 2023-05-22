@@ -2,7 +2,7 @@ from manim import *
 from os.path import join
 
 class Player:  
-  def __init__(self, width: float, height: float, controlsHeight: float = 0.5, startProgress: float = 0, startGen: int = 0, endGen: int = 1, trackText: str = "Genes random generation"):
+  def __init__(self, width: float, height: float, controlsHeight: float = 0.5, startProgress: float = 0, startGen: int = 0, endGen: int = 1, trackText: str = "Intro"):
     self.width = width
     self.height = height
     self.progress = startProgress
@@ -18,7 +18,7 @@ class Player:
     self.animRunTime = 0.5
     self.startGen = startGen
     self.endGen = endGen
-    self.trackText = trackText
+    self.trackText = Text(trackText, height = self.controlsHeight, font = "Inter", weight = SEMIBOLD)
 
   def withProgress(self, progress: float):
     self.progress = progress
@@ -53,24 +53,24 @@ class Player:
     self.endGen = endGen
     return self
   
-  def withTrackText(self, text: str):
-    self.trackText = text
-    return self
+  def toTrackText(self, txt: str) -> Animation:
+    targetTxt = Text(txt, height = self.controlsHeight, font = "Inter", weight = SEMIBOLD).next_to(self.progressBarOutline, DOWN, buff = MED_SMALL_BUFF)
+    return FadeTransform(self.trackText, targetTxt)
   
   def buildMobj(self) -> VGroup:
-    progressBarOutline = RoundedRectangle(corner_radius = 0.08, height = self.height, width = self.width).next_to(self.currentButton, DOWN)
-    progressBarFill = RoundedRectangle(
+    self.progressBarOutline = RoundedRectangle(corner_radius = 0.08, height = self.height, width = self.width).next_to(self.currentButton, DOWN)
+    self.progressBarFill = RoundedRectangle(
       corner_radius = 0.08,
       height = self.height,
       width = self.width * (self.progress + 1e-3),
       fill_color = GRAY,
       fill_opacity = 1,
       stroke_width = 0
-    ).next_to(self.currentButton, DOWN).align_to(progressBarOutline, LEFT)
-    startGenText = Text(f"Gen {self.startGen}", height = self.height, font = "Inter").next_to(progressBarOutline, LEFT)
-    endGenText = Text(f"Gen {self.endGen}", height = self.height, font = "Inter").next_to(progressBarOutline, RIGHT)
-    trackText = Text(self.trackText, height = self.controlsHeight, font = "Inter", weight = SEMIBOLD).next_to(progressBarOutline, DOWN, buff = MED_SMALL_BUFF)
-    g =  VGroup(self.currentButton, self.backward, self.forward, progressBarFill, progressBarOutline, startGenText, endGenText, trackText)
+    ).next_to(self.currentButton, DOWN).align_to(self.progressBarOutline, LEFT)
+    self.startGenText = Text(f"Gen {self.startGen}", height = self.height, font = "Inter").next_to(self.progressBarOutline, LEFT)
+    self.endGenText = Text(f"Gen {self.endGen}", height = self.height, font = "Inter").next_to(self.progressBarOutline, RIGHT)
+    self.trackText = self.trackText.next_to(self.progressBarOutline, DOWN, buff = MED_SMALL_BUFF)
+    g =  VGroup(self.currentButton, self.backward, self.forward, self.progressBarFill, self.progressBarOutline, self.startGenText, self.endGenText, self.trackText)
     self.lastBuild = g
     return g
   

@@ -60,7 +60,7 @@ class RodIncrementalGene(MovingCameraScene):
     """
     Show player
     """
-    player = Player(10, 0.2, 0.3)
+    player = Player(10, 0.2, 0.3, trackText="Problem's space constraints")
     self.add(player.buildMobj())
 
     """
@@ -97,7 +97,10 @@ class RodIncrementalGene(MovingCameraScene):
     )
     self.wait()
 
-    self.play(player.buttonToPlay())
+    self.play(
+      player.buttonToPlay(),
+      player.toTrackText("Genes random generation")
+    )
 
     """
     Load population and show some good gene generation
@@ -175,8 +178,8 @@ class RodIncrementalGene(MovingCameraScene):
     ]
     invalidTxt = [
       "Overflow",
-      "Self-intersecting",
-      "Hole-intersecting"
+      "Hole-intersecting",
+      "Self-intersecting"
     ]
     for idx, txt in zip(invalidIdxs, invalidTxt):
       gene = GeneG(invalids[idx], geneId)
@@ -185,7 +188,7 @@ class RodIncrementalGene(MovingCameraScene):
       g.to_edge(LEFT)
       self.play(createAnim, player.toProgress(geneId / itNum))
 
-      t = Text(txt, color = RED).next_to(self.constraints, RIGHT).rotate(angle = -PI/2).shift(LEFT)
+      t = Text(txt, color = RED).next_to(self.constraints, RIGHT)
       self.play(
         Succession(
           *[FadeToColor(g, color = RED if i%2 == 0 else GREEN, run_time=0.3) for i in range(5)]
@@ -211,7 +214,7 @@ class RodIncrementalGene(MovingCameraScene):
       self.wait(0.5)
 
       geneId += 1
-
+    return
     """
     Fast forward
     """
