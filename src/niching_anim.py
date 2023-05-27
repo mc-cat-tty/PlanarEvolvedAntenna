@@ -22,8 +22,12 @@ class Niching(MovingCameraScene, Gen0Env):
       player = Player(10, 0.2, 0.3, targetProgress = 66, startProgress = 61, trackText="Genes random generation")
     )
 
+    self.table.add_to_back(
+      *[self.table.get_highlighted_cell((1, i), color = RED) for i in range(3, 6)]
+    )
+
     self.add(
-      self.table,
+      self.geneTableGroup,
       self.player.withPauseButton().buildMobj()
     )
 
