@@ -2,10 +2,10 @@ from manim import *
 from os.path import join
 
 class Player:  
-  def __init__(self, width: float, height: float, controlsHeight: float = 0.5, startProgress: float = 0, startGen: int = 0, endGen: int = 1, trackText: str = "Intro"):
+  def __init__(self, width: float, height: float, controlsHeight: float = 0.5, targetProgress: float = 100, startProgress: float = 0, startGen: int = 0, endGen: int = 1, trackText: str = "Intro"):
     self.width = width
     self.height = height
-    self.progress = startProgress
+    self.progress = startProgress / targetProgress
     self.controlsHeight = controlsHeight
     self.stop = SVGMobject(file_name = join("..", "vectors", "stop.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
     self.play = SVGMobject(file_name = join("..", "vectors", "play.svg"), height = self.controlsHeight*1.5).to_edge(DOWN).shift((0, self.height*3, 0))
@@ -18,10 +18,11 @@ class Player:
     self.animRunTime = 0.5
     self.startGen = startGen
     self.endGen = endGen
+    self.targetProgress = targetProgress
     self.trackText = Text(trackText, height = self.controlsHeight, font = "Inter", weight = SEMIBOLD)
 
   def withProgress(self, progress: float):
-    self.progress = progress
+    self.progress = progress / self.targetProgress
     return self
   
   def updateButton(self, targetButton: SVGMobject) -> AnimationGroup:
@@ -38,6 +39,18 @@ class Player:
     
   def buttonToPause(self) -> AnimationGroup:
     return self.updateButton(self.pause.copy())
+
+  def withStopButton(self) -> AnimationGroup:
+    self.currentButton = self.stop
+    return self
+    
+  def withPlayButton(self) -> AnimationGroup:
+    self.currentButton = self.play
+    return self
+    
+  def withPauseButton(self):
+    self.currentButton = self.pause
+    return self
     
   def showFastForward(self) -> AnimationGroup:
     return FadeIn(self.fastForward)
@@ -74,5 +87,5 @@ class Player:
     return g
   
   def toProgress(self, progress: float) -> Animation:
-    self.progress = progress
+    self.progress = progress / self.targetProgress
     return Transform(self.lastBuild, self.buildMobj())
