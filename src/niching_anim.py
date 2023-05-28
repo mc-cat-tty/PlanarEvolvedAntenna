@@ -15,7 +15,6 @@ class Niching(MovingCameraScene, Gen0Env):
       populationFilename = join("results", f"epoch_{EPOCH}.pkl"),
       configFilename = "config.yaml",
       scaleK = 1 / 20,
-      iterationsNumber = 61,
       tableRows = 8,
       tableCols = 8,
       startEpoch = EPOCH,
@@ -31,5 +30,5 @@ class Niching(MovingCameraScene, Gen0Env):
       self.player.withPauseButton().buildMobj()
     )
 
-    self.play(self.player.toTrackText("Crossover"))
+    self.play(self.player.toTrackText("Niching"))
 

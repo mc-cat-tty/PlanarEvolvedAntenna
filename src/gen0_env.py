@@ -12,7 +12,6 @@ class Gen0Env:
     populationFilename: str,
     configFilename: str,
     scaleK: float,
-    iterationsNumber: int,
     tableRows: int,
     tableCols: int,
     player: Player,
@@ -20,7 +19,7 @@ class Gen0Env:
     hideGenes: bool = False
   ):
     self.scaleK = scaleK
-    self.iterationsNumber = iterationsNumber
+    self.iterationsNumber = tableCols * tableRows
     self.tableCols = tableCols
     self.tableRows = tableRows
     self.player = player

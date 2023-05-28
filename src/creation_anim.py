@@ -18,7 +18,6 @@ class Creation(MovingCameraScene, Gen0Env):
       populationFilename = join("results", f"epoch_{EPOCH}.pkl"),
       configFilename = "config.yaml",
       scaleK = 1 / 20,
-      iterationsNumber = 64,
       tableRows = 8,
       tableCols = 8,
       startEpoch = EPOCH,
